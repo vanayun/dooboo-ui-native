@@ -31,8 +31,10 @@ export default function AutoComplete({
   placeholderText,
   debounceDelay,
   onDebounceOrOnReset,
+  underlayColor,
 }: AutoCompleteProps): ReactElement {
   const [innerValue, setInnerValue] = useState<string>(value);
+  const [selectedData, setSelectedData] = useState<DummyDatum | null>(null);
   const [isOptionsOpen, toggleOptions] = useState(false);
   const debouncedValue = useDebounce(innerValue, debounceDelay);
   const [filteredData] = useState<DummyDatum[]>(dummyData);
@@ -51,44 +53,54 @@ export default function AutoComplete({
     toggleOptions((prevStatus) => !prevStatus);
   }, []);
 
-  const onPressOption = useCallback((label: string) => {
-    setInnerValue(label);
+  const onPressOption = useCallback((data: DummyDatum) => {
+    if (data && data.label) {
+      setInnerValue(data.label);
+    }
+    setSelectedData(data);
+
     setTimeout(() => {
       toggleOptions((prevStatus) => !prevStatus);
     }, 80);
   }, []);
 
-  const [isFocused, setIsFocused] = useState<boolean>(false);
-
-  const handleFocus = useCallback(
-    ({ isFocus }): void => {
-      setIsFocused(isFocus);
+  const filterData: DummyDatum[] = filteredData.filter(
+    ({ id, label, value }) => {
+      const innerValueLower = innerValue ? innerValue.toLowerCase() : null;
+      return innerValueLower ? (
+        id.toLowerCase().includes(innerValueLower) ||
+        label.toLowerCase().includes(innerValueLower) ||
+        value.toLowerCase().includes(innerValueLower)
+      ) : filteredData;
     },
-    [isFocused],
   );
 
   return (
     <Wrapper>
-      <InputContainer
-        style={style}
-        on={isOptionsOpen || isFocused || innerValue !== ''}
-      >
+      <InputContainer style={style} on={isOptionsOpen}>
         <RenderInput
-          on={isFocused || isOptionsOpen || innerValue !== ''}
           testID={renderInputTestID}
           value={innerValue}
           onChangeText={(text: string): void => {
             setInnerValue(text);
           }}
-          label={placeholderText || 'Choose a country'}
-          onFocus={(): void => handleFocus(true)}
-          onBlur={(): void => handleFocus(false)}
+          placeholder={placeholderText || 'search...'}
+          placeholderTextColor={'#cdd2d7'}
         />
         <CaretContainer testID={caretBtnTestID} onPress={onPressCaret}>
           <StyledImage source={isOptionsOpen ? IC_ARR_UP : IC_ARR_DOWN} />
         </CaretContainer>
       </InputContainer>
-      {isOptionsOpen && <Options data={filteredData} onPress={onPressOption} />}
-    </Wrapper>
+      {
+        isOptionsOpen && (
+          <Options
+            data={filterData}
+            underlayColor={underlayColor}
+            onPress={onPressOption}
+            selectedData={selectedData}
+          />
+        )
+      }
+    </Wrapper >
   );
 }

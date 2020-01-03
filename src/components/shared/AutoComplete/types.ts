@@ -9,10 +9,27 @@ export interface AutoCompleteProps {
   style?: StyleProp<ViewStyle>;
   debounceDelay?: number;
   placeholderText?: string;
+  underlayColor?: string;
 }
 
+type OnPressOption = (data: DummyDatum) => void;
+
 export type RenderOptionProps = DummyDatum & {
-  onPress: (label: string) => void;
+  onPress: OnPressOption;
+  index: number;
+  isSelected: boolean;
+  underlayColor?: string;
+};
+
+export type RenderOptionsProps = {
+  data: DummyDatum[];
+  onPress: OnPressOption;
+  selectedData: DummyDatum | null;
+  underlayColor?: string;
+};
+
+export type OptionWrapperProps = {
+  isSelected: boolean;
 };
 
 export type InputContainerProps = {
